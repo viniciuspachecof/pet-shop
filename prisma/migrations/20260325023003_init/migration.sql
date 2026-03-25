@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "appointments" (
+CREATE TABLE "public"."appointments" (
     "id" TEXT NOT NULL,
     "tutorName" TEXT NOT NULL,
     "petName" TEXT NOT NULL,
