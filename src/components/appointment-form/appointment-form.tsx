@@ -12,7 +12,14 @@ import { Button } from '@/components/ui/button';
 import z from 'zod';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarIcon, ChevronDownIcon, Dog, Phone, User } from 'lucide-react';
+import {
+  CalendarIcon,
+  ChevronDownIcon,
+  Clock,
+  Dog,
+  Phone,
+  User,
+} from 'lucide-react';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { IMaskInput } from 'react-imask';
@@ -20,6 +27,13 @@ import { format, setHours, setMinutes, startOfToday } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { Calendar } from '../ui/calendar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 
 const appointmentFormSchema = z
   .object({
@@ -254,19 +268,40 @@ export const AppointmentForm = () => {
           </div>
 
           <div>
-            <label className="text-label-medium-size text-content-primary">
-              Descrição do serviço
-            </label>
+            <Controller
+              control={control}
+              name="time"
+              render={({ field }) => (
+                <div className="flex flex-col">
+                  <label className="text-label-medium-size text-content-primary">
+                    Hora
+                  </label>
 
-            <Textarea
-              placeholder="Descrição do serviço"
-              className="resize-none"
-              {...register('description')}
+                  <Select
+                    onValueChange={(value) => field.onChange(value)}
+                    value={field.value || ''}
+                  >
+                    <SelectTrigger>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-content-brand" />
+                        <SelectValue placeholder="--:-- --" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIME_OPTIONS.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             />
 
-            {errors.description && (
+            {errors.time && (
               <p className="text-red-500 text-sm">
-                {errors.description.message as string}
+                {errors.time.message as string}
               </p>
             )}
           </div>
