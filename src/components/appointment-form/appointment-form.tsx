@@ -17,6 +17,7 @@ import {
   ChevronDownIcon,
   Clock,
   Dog,
+  Loader2,
   Phone,
   User,
 } from 'lucide-react';
@@ -34,6 +35,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { toast } from 'sonner';
+import { createAppointment } from '@/app/actions';
 
 const appointmentFormSchema = z
   .object({
@@ -73,7 +76,7 @@ export const AppointmentForm = () => {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<AppointFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
@@ -82,11 +85,22 @@ export const AppointmentForm = () => {
       phone: '',
       description: '',
       scheduleAt: undefined,
+      time: '',
     },
   });
 
-  const onSubmit = (data: AppointFormValues) => {
-    console.log(data);
+  const onSubmit = async (data: AppointFormValues) => {
+    const [hour, minute] = data.time.split(':');
+
+    const scheduleAt = new Date(data.scheduleAt);
+    scheduleAt.setHours(Number(hour), Number(minute), 0, 0);
+
+    await createAppointment({
+      ...data,
+      scheduleAt,
+    });
+
+    toast.success('Agendamento criado com sucesso!');
   };
 
   return (
@@ -210,103 +224,112 @@ export const AppointmentForm = () => {
             )}
           </div>
 
-          <div>
-            <Controller
-              control={control}
-              name="scheduleAt"
-              render={({ field }) => (
-                <div className="flex flex-col">
-                  <label className="text-label-medium-size text-content-primary">
-                    Data
-                  </label>
+          <div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+            <div>
+              <Controller
+                control={control}
+                name="scheduleAt"
+                render={({ field }) => (
+                  <div className="flex flex-col">
+                    <label className="text-label-medium-size text-content-primary">
+                      Data
+                    </label>
 
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className={cn(
-                          'w-full justify-between text-left font-normal bg-background-tertiary border-border-primary text-content-primary',
-                          !field.value && 'text-content-secondary'
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon
-                            className="text-content-brand"
-                            size={20}
-                          />
-
-                          {field.value ? (
-                            format(field.value, 'dd/MM/yyyy')
-                          ) : (
-                            <span>Selecione uma data</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={cn(
+                            'w-full justify-between text-left font-normal bg-background-tertiary border-border-primary text-content-primary',
+                            !field.value && 'text-content-secondary'
                           )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <CalendarIcon
+                              className="text-content-brand"
+                              size={20}
+                            />
+
+                            {field.value ? (
+                              format(field.value, 'dd/MM/yyyy')
+                            ) : (
+                              <span>Selecione uma data</span>
+                            )}
+                          </div>
+
+                          <ChevronDownIcon className="opacity-50 h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(date) => field.onChange(date)}
+                          disabled={(date) => date < startOfToday()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+              />
+
+              {errors.scheduleAt && (
+                <p className="text-red-500 text-sm">
+                  {errors.scheduleAt.message as string}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Controller
+                control={control}
+                name="time"
+                render={({ field }) => (
+                  <div className="flex flex-col">
+                    <label className="text-label-medium-size text-content-primary">
+                      Hora
+                    </label>
+
+                    <Select
+                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value || ''}
+                    >
+                      <SelectTrigger>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-content-brand" />
+                          <SelectValue placeholder="--:-- --" />
                         </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIME_OPTIONS.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              />
 
-                        <ChevronDownIcon className="opacity-50 h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(date) => field.onChange(date)}
-                        disabled={(date) => date < startOfToday()}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+              {errors.time && (
+                <p className="text-red-500 text-sm">
+                  {errors.time.message as string}
+                </p>
               )}
-            />
-
-            {errors.scheduleAt && (
-              <p className="text-red-500 text-sm">
-                {errors.scheduleAt.message as string}
-              </p>
-            )}
+            </div>
           </div>
 
-          <div>
-            <Controller
-              control={control}
-              name="time"
-              render={({ field }) => (
-                <div className="flex flex-col">
-                  <label className="text-label-medium-size text-content-primary">
-                    Hora
-                  </label>
-
-                  <Select
-                    onValueChange={(value) => field.onChange(value)}
-                    value={field.value || ''}
-                  >
-                    <SelectTrigger>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-content-brand" />
-                        <SelectValue placeholder="--:-- --" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIME_OPTIONS.map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className="flex justify-end">
+            <Button type="submit" variant="brand" disabled={isSubmitting}>
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-            />
-
-            {errors.time && (
-              <p className="text-red-500 text-sm">
-                {errors.time.message as string}
-              </p>
-            )}
+              Agendar
+            </Button>
           </div>
-
-          <button type="submit">Salvar</button>
         </form>
       </DialogContent>
     </Dialog>
