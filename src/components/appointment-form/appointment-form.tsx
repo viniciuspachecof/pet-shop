@@ -37,6 +37,8 @@ import {
 } from '../ui/select';
 import { toast } from 'sonner';
 import { createAppointment } from '@/app/actions';
+import { useEffect, useState } from 'react';
+import { Appointment } from '@/types/appointment';
 
 const appointmentFormSchema = z
   .object({
@@ -71,11 +73,22 @@ const appointmentFormSchema = z
 
 type AppointFormValues = z.infer<typeof appointmentFormSchema>;
 
-export const AppointmentForm = () => {
+type AppointmentFormProps = {
+  appointment?: Appointment;
+  children?: React.ReactNode;
+};
+
+export const AppointmentForm = ({
+  appointment,
+  children,
+}: AppointmentFormProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const {
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<AppointFormValues>({
     resolver: zodResolver(appointmentFormSchema),
@@ -95,19 +108,29 @@ export const AppointmentForm = () => {
     const scheduleAt = new Date(data.scheduleAt);
     scheduleAt.setHours(Number(hour), Number(minute), 0, 0);
 
-    await createAppointment({
+    const result = await createAppointment({
       ...data,
       scheduleAt,
     });
 
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+
     toast.success('Agendamento criado com sucesso!');
+
+    setIsOpen(false);
+    reset();
   };
 
+  useEffect(() => {
+    reset(appointment);
+  }, [appointment, reset]);
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="brand">Novo Agendamento</Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent
         variant="appointment"
@@ -194,6 +217,7 @@ export const AppointmentForm = () => {
                     focus:border-border-brand focus-visible:border-border-brand aria-invalid:ring-destructive/20 aria-invalid:border-destructive"
                     onAccept={(value) => field.onChange(value)}
                     onBlur={field.onBlur}
+                    value={field.value || ''}
                   />
                 )}
               />
