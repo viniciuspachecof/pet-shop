@@ -1,0 +1,58 @@
+'use client';
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Popover, PopoverTrigger } from '../ui/popover';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
+import { isValid } from 'date-fns';
+
+export const DatePicker = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get('date');
+
+  const getInitialDate = useCallback(() => {
+    if (!dateParam) return;
+
+    const [year, month, day] = dateParam.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day);
+
+    if (!isValid(parsedDate)) return new Date();
+
+    return parsedDate;
+  }, [dateParam]);
+  const [date, setDate] = useState<Date | undefined>(getInitialDate);
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="outline">
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-min[180px] justify-between text-left font-normal bg-transparent 
+            border-border-primary text-content-primary hover:bg-background-tertiary 
+            hover:border-border-secondary hover:text-content-primary focus-visible:ring-offset-0 
+            focus-visible:ring-1 focus-visible:ring-border-brand focus:border-border-brand 
+            focus-visible:border-border-brand"
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-content-brand" />
+              <span>Selecione uma data</span>
+            </div>
+
+            <ChevronDown className="h-4 w-4 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+      </Popover>
+
+      <Button variant="outline">
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
