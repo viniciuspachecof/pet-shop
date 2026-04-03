@@ -12,6 +12,14 @@ const appointmentSchema = z.object({
   scheduleAt: z.date(),
 });
 
+function calculatePeriod(hour: number) {
+  const isMorning = hour >= 9 && hour < 12;
+  const isAfternoon = hour >= 13 && hour < 18;
+  const isEvening = hour >= 19 && hour < 21;
+
+  return { isMorning, isAfternoon, isEvening };
+}
+
 type AppointmentData = z.infer<typeof appointmentSchema>;
 
 export async function createAppointment(data: AppointmentData) {
@@ -21,9 +29,7 @@ export async function createAppointment(data: AppointmentData) {
     const { scheduleAt } = parsedData;
     const hour = scheduleAt.getHours();
 
-    const isMorning = hour >= 9 && hour < 12;
-    const isAfternoon = hour >= 13 && hour < 18;
-    const isEvening = hour >= 19 && hour < 21;
+    const { isMorning, isAfternoon, isEvening } = calculatePeriod(hour);
 
     if (!isMorning && !isAfternoon && !isEvening) {
       return {
@@ -67,9 +73,7 @@ export async function updateAppointment(id: string, data: AppointmentData) {
     const { scheduleAt } = parsedData;
     const hour = scheduleAt.getHours();
 
-    const isMorning = hour >= 9 && hour < 12;
-    const isAfternoon = hour >= 13 && hour < 18;
-    const isEvening = hour >= 19 && hour < 21;
+    const { isMorning, isAfternoon, isEvening } = calculatePeriod(hour);
 
     if (!isMorning && !isAfternoon && !isEvening) {
       return {
